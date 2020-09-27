@@ -43,7 +43,7 @@ function send_email() {
         console.log(result);
         $("#id_recipients_feed_back").html(result.error);
     });
-
+    load_mailbox("Sent");
     return false;
 }
 
@@ -55,7 +55,24 @@ function load_mailbox(mailbox) {
     fetch("/emails/"+mailbox)
     .then(response => response.json())
     .then(result => {
-        console.log(result);
+        result.forEach((email) => {
+            console.log(email);
+            let card = `<li class="list-group-item">
+                            <a class="stretched-link text-decoration-none" href="#${email.id}">
+                                <div class="row">
+                                <div class="col-4">
+                                <h5 class="mx-2 mt-2">${email.subject}</h5>
+                                <small class="text-muted mx-2 mb-2">by ${email.sender} at ${email.timestamp}</small>
+                                </div>
+                                <div class="col-8">
+                                <p class="small text-muted mx-2 my-2">${email.body}</p>
+                                </div>
+                                </div>
+                            </a>
+                        </li>`;
+            $("#emails-list").append(card);
+        })
+
     })
 
     // Show the mailbox and hide other views
@@ -63,5 +80,10 @@ function load_mailbox(mailbox) {
     $('#compose-view').hide();
 
     // Show the mailbox name
-    $('#emails-view').html(`<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`);
+    $('#emails-view').html(`<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>
+                            <ul class="list-group list-group-flush" id="emails-list"></ul>`);
+}
+
+function load_email(email_id) {
+
 }
