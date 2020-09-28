@@ -75,20 +75,28 @@ function load_mailbox(mailbox) {
             if (email.subject.length === 0) {
                 email.subject = "(No Subject)";
             }
+            let subject_class = "";
+            if (!email.read) {
+                subject_class = "font-weight-bold ";
+            }
             let card = `<li class="list-group-item">
-                            <a class="stretched-link text-secondary text-decoration-none" href onclick="load_email(${email.id});return false;">
+                            <a class="stretched-link text-secondary text-decoration-none" id="email-${email.id}">
                                 <div class="row">
                                     <div class="col-4">
-                                        <h5 class="mx-2 mt-2">${email.subject}</h5>
+                                        <h5 class="${subject_class} mx-2 mt-2">${email.subject}</h5>
                                         <small class="text-muted mx-2 mb-2">by ${email.sender} at ${email.timestamp}</small>
                                     </div>
                                     <div class="col-8">
-                                        <p class="small text-muted mx-2 my-2">${email.body}</p>
+                                        <p class="${subject_class} small text-muted mx-2 my-2">${email.body}</p>
                                     </div>
                                 </div>
                             </a>
                         </li>`;
             $("#emails-list").append(card);
+            $(`#email-${email.id}`).on("click", () => {
+                load_email(email.id);
+                return false;
+            })
         });
     });
     // Show the mailbox name
@@ -121,16 +129,30 @@ function load_email(email_id) {
                                    <div class="text-muted mx-2">From: ${email.sender}</div>
                                    <div class="text-muted mx-2">To: ${email.recipients}</div>`);
             $('#email-body').html(`<p class="mx-2 my-2" id="email-body">${email.body}</p>`);
-            $("#reply").on("click", () => reply_forward_email("reply", email.timestamp, email.sender, email.sender, email.subject, email.body));
-            $("#reply-all").on("click", () => reply_forward_email("reply", email.timestamp, email.sender, email.sender+','+email.recipients, email.subject, email.body));
-            $("#forward").on("click", () => reply_forward_email("forward", email.timestamp, email.sender, "", email.subject, email.body));
+            document.querySelector("#reply").onclick = () => reply_forward_email("reply", email.timestamp, email.sender, email.sender, email.subject, email.body);
+            document.querySelector("#reply-all").onclick = () => reply_forward_email("reply", email.timestamp, email.sender, email.sender+','+email.recipients, email.subject, email.body);
+            document.querySelector("#forward").onclick = () => reply_forward_email("forward", email.timestamp, email.sender, "", email.subject, email.body);
             if (email.archived) {
                 $("#archive").text("Unarchive");
             } else {
 
                 $("#archive").text("Archive");
             }
-            $("#archive").on("click", () => archive_email(email_id, !email.archived));
+            document.querySelector("#archive").onclick = () => archive_email(email_id, !email.archived);
+            if (!email.read) {
+                let email_req = {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        read: true
+                    })
+                };
+                fetch("/emails/"+email_id, email_req).then(response => {
+                    console.log("email_read", response.status);
+                    if (!response.ok) {
+                        console.log(response);
+                    }
+                });
+            }
         }
     });
 
